@@ -6,12 +6,20 @@ const itemSchema = new Schema({
     type: String,
     required: true,
   },
+  born: String,
+  dead: String,
+  year: String,
+  buriedAt: String,
   description: String,
   link: {
     type: String,
     required: true,
   },
-  imageUrl: String,
+  image: String,
+  coords:{
+    type: [String],
+    required: true,
+  }
 });
 
 module.exports = mongoose.model("Item", itemSchema);
