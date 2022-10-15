@@ -16,10 +16,14 @@ const itemSchema = new Schema({
     required: true,
   },
   image: String,
-  coords:{
+  coords: {
     type: [String],
     required: true,
-  }
+  },
+  addedAt: {
+    type: Date,
+    default: Date.now(),
+  },
 });
 
 module.exports = mongoose.model("Item", itemSchema);
