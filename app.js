@@ -3,7 +3,8 @@ const bodyParser = require('body-parser')
 const mongoose = require("mongoose");
 const app = express();
 
-const itemsRoutes = require("./routes/items/items");
+const itemsRouter = require("./routes/items/itemsRoutes");
+const authRouter = require("./routes/users/authRoutes");
 
 //Handling CORS
 app.use((req, res, next) => {
@@ -21,7 +22,8 @@ app.use((req, res, next) => {
 });
 
 app.use(bodyParser.json());
-app.use(itemsRoutes);
+app.use('/api/v1/items', itemsRouter);
+app.use('/api/v1/users', authRouter);
 
 (async () => {
   try {
