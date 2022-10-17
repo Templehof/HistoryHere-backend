@@ -30,7 +30,7 @@ app.use('/api/v1/users', authRouter);
     await mongoose.connect(
       `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.20yf7pu.mongodb.net/?retryWrites=true&w=majority`
     );
-    app.listen(process.env.PORT || 3000);
+    app.listen(process.env.PORT || 8080);
     console.log("Flight check complete");
   } catch (error) {
     console.log(err);
