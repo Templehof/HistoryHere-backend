@@ -1,10 +1,11 @@
 const express = require("express");
-const bodyParser = require('body-parser')
+const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const app = express();
 
 const itemsRouter = require("./routes/items/itemsRoutes");
 const authRouter = require("./routes/users/authRoutes");
+const globalErrorHandler = require("./controllers/errorController")
 
 //Handling CORS
 app.use((req, res, next) => {
@@ -22,14 +23,15 @@ app.use((req, res, next) => {
 });
 
 app.use(bodyParser.json());
-app.use('/api/v1/items', itemsRouter);
-app.use('/api/v1/users', authRouter);
+app.use("/api/v1/items", itemsRouter);
+app.use("/api/v1/users", authRouter);
 
 (async () => {
   try {
     await mongoose.connect(
       `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.20yf7pu.mongodb.net/?retryWrites=true&w=majority`
     );
+    console.log("DB connection set");
     app.listen(process.env.PORT || 8080);
     console.log("Flight check complete");
   } catch (error) {

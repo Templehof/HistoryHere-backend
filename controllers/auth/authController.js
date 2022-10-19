@@ -1,3 +1,4 @@
+const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/user");
 const AppError = require("../../utils/appError");
@@ -41,14 +42,14 @@ exports.login = async (req, res, next) => {
 
     //Check if email and password exist
     if (!email || !password) {
-      return next(new AppError("Please, provide email and password!"), 400);
+      next(new AppError("Need to provide credentials"), 401);
     }
 
     //Check if user exists and the password is correct
     const user = await User.findOne({ email }).select("+password");
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-      return next(new AppError("Incorrect credentials"), 401);
+      next(new AppError("Incorrect credentials"), 401);
     }
 
     //If everything is ok send the token to the client
@@ -59,11 +60,46 @@ exports.login = async (req, res, next) => {
       token,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(401).json({
       status: "fail",
       data: {
-        error: error,
+        error: "An error occured :(",
       },
     });
   }
+};
+
+exports.protect = async (req, res, next) => {
+  //get token
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    console.log("token identified")
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  //verification of the token
+
+  if (!token) {
+    next(new AppError("Need to login to perform this action"), 401);
+  }
+
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log("decoded");
+  //check if user exists
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    next(new AppError("the user does no longer exist"), 401);
+  }
+
+  //check if user chainged password after jwt issuance
+  if (await currentUser.changedPasswordAfter(decoded.iat)) {
+    return next(new AppError("password changed, login again"), 401);
+  }
+
+  //grant access
+  req.user = currentUser;
+  next();
 };
