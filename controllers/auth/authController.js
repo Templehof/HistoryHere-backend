@@ -10,6 +10,18 @@ const signToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    data: {
+      user,
+    },
+  });
+};
+
 exports.signup = async (req, res) => {
   try {
     const newUser = await User.create({
@@ -19,15 +31,7 @@ exports.signup = async (req, res) => {
       passwordConfirm: req.body.passwordConfirm,
     });
 
-    const token = signToken(newUser._id);
-
-    res.status(201).json({
-      status: "success",
-      token,
-      data: {
-        user: newUser,
-      },
-    });
+    createSendToken(newUser, 201, res);
   } catch (error) {
     res.status(400).json({
       status: "fail",
@@ -51,16 +55,11 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-      next(new AppError("Incorrect credentials"), 401);
+      return next(new AppError("Incorrect credentials"), 401);
     }
 
     //If everything is ok send the token to the client
-    const token = signToken(user._id);
-
-    res.status(200).json({
-      status: "success",
-      token,
-    });
+    createSendToken(user, 200, res);
   } catch (error) {
     res.status(401).json({
       status: "fail",
@@ -143,12 +142,7 @@ exports.resetPassword = async (req, res, next) => {
   //update the changed password for the current user !(done in user model)
 
   //log the user in (send the jwt)
-  const token = signToken(user._id);
-
-  res.status(200).json({
-    status: "success",
-    token,
-  });
+  createSendToken(user, 200, res);
 };
 
 exports.protect = async (req, res, next) => {
@@ -158,7 +152,6 @@ exports.protect = async (req, res, next) => {
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
-    console.log("token identified");
     token = req.headers.authorization.split(" ")[1];
   }
 
@@ -169,7 +162,6 @@ exports.protect = async (req, res, next) => {
   }
 
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  console.log("decoded");
   //check if user exists
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
@@ -184,4 +176,33 @@ exports.protect = async (req, res, next) => {
   //grant access
   req.user = currentUser;
   next();
+};
+
+exports.updatePassword = async (req, res, next) => {
+  try {
+    //get user from collection
+    const user = await User.findById(req.user.id).select("+password");
+    //Check if the posted password is correct
+
+    if (
+      !(await user.correctPassword(req.body.passwordCurrent, user.password))
+    ) {
+      next(new AppError("Incorrect credentials"), 401);
+    }
+
+    //if so update password
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    await user.save();
+
+    //login user with new password(send jwt)
+    createSendToken(user, 200, res);
+  } catch (error) {
+    res.status(401).json({
+      status: "fail",
+      data: {
+        error: "An error occured while trying to change password",
+      },
+    });
+  }
 };
