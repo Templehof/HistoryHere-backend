@@ -1,13 +1,20 @@
-const Item = require("../../models/item");
+const { ObjectID } = require("bson");
+const User = require("../../models/user");
+const AppError = require("../../utils/appError");
 
 exports.getAllItems = async (req, res) => {
   try {
-    const items = await Item.find();
+    const user = await User.findById(req.body.id);
+
+    if (!user) {
+      return next(
+        new AppError("A database error occured, please try again later")
+      );
+    }
+
     res.status(200).json({
       status: "success",
-      data: {
-        items: items,
-      },
+      data: user.savedItems,
     });
   } catch (error) {
     res.status(404).json({
@@ -19,30 +26,18 @@ exports.getAllItems = async (req, res) => {
 
 exports.addItem = async (req, res) => {
   try {
-    await Item.create(req.body);
-    res.status(201).json({
+    const user = await User.findById(req.body.id);
+    const itemToSave = {...req.body.item, itemId: ObjectID()}
+    user.savedItems = [...user.savedItems, itemToSave];
+    await user.save();
+    res.status(200).json({
       status: "success",
-      message: "item added!",
+      message: "item saved successfully",
     });
   } catch (error) {
     res.status(400).json({
       status: "fail",
       message: "error, invalid data :(",
-    });
-  }
-};
-
-exports.deleteItem = async (req, res) => {
-  try {
-    await Item.findByIdAndDelete(req.params.id);
-    res.status(204).json({
-      status: "success",
-    });
-  } catch (error) {
-    console.log(error)
-    res.status(404).json({
-      status: "fail",
-      message: "error, couldn't remove the item :(",
     });
   }
 };

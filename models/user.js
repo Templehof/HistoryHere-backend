@@ -37,6 +37,34 @@ const userSchema = new Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+
+  savedItems: [
+    {
+      itemId: String,
+      title: {
+        type: String,
+        required: true,
+      },
+      born: String,
+      dead: String,
+      year: String,
+      buriedAt: String,
+      description: String,
+      link: {
+        type: String,
+        required: true,
+      },
+      image: String,
+      coords: {
+        type: [String],
+        required: true,
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now(),
+      },
+    },
+  ],
 });
 
 userSchema.pre("save", async function (next) {
