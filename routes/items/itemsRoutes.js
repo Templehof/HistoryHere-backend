@@ -5,6 +5,6 @@ const router = express.Router();
 
 
 router.get("/favourites", authController.protect, getAllItems);
-router.post("/favourites", authController.protect, addItem);
+router.patch("/favourites", authController.protect, addItem);
 
 module.exports = router;

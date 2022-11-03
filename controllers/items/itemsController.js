@@ -1,10 +1,9 @@
-const { ObjectID } = require("bson");
 const User = require("../../models/user");
 const AppError = require("../../utils/appError");
 
 exports.getAllItems = async (req, res) => {
   try {
-    const user = await User.findById(req.body.id);
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return next(
@@ -26,15 +25,18 @@ exports.getAllItems = async (req, res) => {
 
 exports.addItem = async (req, res) => {
   try {
-    const user = await User.findById(req.body.id);
-    const itemToSave = {...req.body.item, itemId: ObjectID()}
-    user.savedItems = [...user.savedItems, itemToSave];
-    await user.save();
+    await User.findByIdAndUpdate(
+      req.user.id,
+      { $push: { savedItems: req.body.item } },
+      { new: true, runValidators: true }
+    );
+
     res.status(200).json({
       status: "success",
       message: "item saved successfully",
     });
   } catch (error) {
+    console.log(error);
     res.status(400).json({
       status: "fail",
       message: "error, invalid data :(",

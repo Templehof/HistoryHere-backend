@@ -5,10 +5,6 @@ const validator = require("validator");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new Schema({
-  name: {
-    type: String,
-    required: [true, "Please, tell us your name!"],
-  },
   email: {
     type: String,
     required: [true, "Please provide a valid email!"],
@@ -16,7 +12,6 @@ const userSchema = new Schema({
     lowercase: true,
     validate: [validator.isEmail, "Please provide a valid email!"],
   },
-  photo: String,
   password: {
     type: String,
     required: [true, "Please, provide a password"],
@@ -33,6 +28,7 @@ const userSchema = new Schema({
       },
       message: "Passwords do not match!",
     },
+    select: false,
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -40,7 +36,6 @@ const userSchema = new Schema({
 
   savedItems: [
     {
-      itemId: String,
       title: {
         type: String,
         required: true,
