@@ -43,3 +43,25 @@ exports.addItem = async (req, res) => {
     });
   }
 };
+
+exports.removeItem = async (req, res) => {
+  console.log(req.body.id)
+  try {
+    await User.findByIdAndUpdate(
+      req.user.id,
+      { $pull: { savedItems: {_id: req.body.id} } },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "item saved successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: "fail",
+      message: "error, invalid data :(",
+    });
+  }
+};
